@@ -3,15 +3,21 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.api.health import router as health_router
-from app.bot.bot import dp, bot
+from app.bot.bot import init_bot, dp
 from app.config import config
 import uvicorn
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    asyncio.create_task(dp.start_polling(bot))
+    try:
+        bot = init_bot()
+        logger.info("Starting bot polling")
+        asyncio.create_task(dp.start_polling(bot))
+    except Exception as e:
+        logger.error(f"Failed to start bot: {e}")
     yield
 
 app = FastAPI(lifespan=lifespan)
